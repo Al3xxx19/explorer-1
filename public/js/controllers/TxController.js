@@ -43,13 +43,13 @@ angular.module('BlocksApp').controller('TxController', function($stateParams, $r
       }
       $http({
         method: 'POST',
-        url: '/internalTX',
+        url: '/eventLog',
         data: {"txHash": $scope.hash}
       }).success(function(data) {
         $scope.logs = data;
-        for(var i=0; i<$scope.logs.length; i++){
-          $scope.logs[i].params = splitParam($scope.logs[i].to);
-        }
+        // for(var i=0; i<$scope.logs.length; i++){
+        //   $scope.logs[i].params = splitParam($scope.logs[i].to);
+        // }
         
       });      
     }

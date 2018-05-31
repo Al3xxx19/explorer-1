@@ -11,9 +11,18 @@ var mongoose = require( 'mongoose' );
 var Block     = mongoose.model( 'Block' );
 var Transaction     = mongoose.model( 'Transaction' );
 var Contract     = mongoose.model( 'Contract' );
-var InternalTx = mongoose.model( 'TokenTransfer' );
+var TokenTransfer = mongoose.model( 'TokenTransfer' );
+var LogEvent = mongoose.model( 'LogEvent' );
 const ERC20ABI = [{"constant":true,"inputs":[],"name":"name","outputs":[{"name":"","type":"string"}],"payable":false,"stateMutability":"view","type":"function"},{"constant":false,"inputs":[{"name":"spender","type":"address"},{"name":"tokens","type":"uint256"}],"name":"approve","outputs":[{"name":"success","type":"bool"}],"payable":false,"stateMutability":"nonpayable","type":"function"},{"constant":true,"inputs":[],"name":"totalSupply","outputs":[{"name":"","type":"uint256"}],"payable":false,"stateMutability":"view","type":"function"},{"constant":false,"inputs":[{"name":"from","type":"address"},{"name":"to","type":"address"},{"name":"tokens","type":"uint256"}],"name":"transferFrom","outputs":[{"name":"success","type":"bool"}],"payable":false,"stateMutability":"nonpayable","type":"function"},{"constant":true,"inputs":[],"name":"decimals","outputs":[{"name":"","type":"uint8"}],"payable":false,"stateMutability":"view","type":"function"},{"constant":true,"inputs":[],"name":"_totalSupply","outputs":[{"name":"","type":"uint256"}],"payable":false,"stateMutability":"view","type":"function"},{"constant":true,"inputs":[{"name":"tokenOwner","type":"address"}],"name":"balanceOf","outputs":[{"name":"balance","type":"uint256"}],"payable":false,"stateMutability":"view","type":"function"},{"constant":false,"inputs":[],"name":"acceptOwnership","outputs":[],"payable":false,"stateMutability":"nonpayable","type":"function"},{"constant":true,"inputs":[],"name":"owner","outputs":[{"name":"","type":"address"}],"payable":false,"stateMutability":"view","type":"function"},{"constant":true,"inputs":[],"name":"symbol","outputs":[{"name":"","type":"string"}],"payable":false,"stateMutability":"view","type":"function"},{"constant":false,"inputs":[{"name":"to","type":"address"},{"name":"tokens","type":"uint256"}],"name":"transfer","outputs":[{"name":"success","type":"bool"}],"payable":false,"stateMutability":"nonpayable","type":"function"},{"constant":false,"inputs":[{"name":"spender","type":"address"},{"name":"tokens","type":"uint256"},{"name":"data","type":"bytes"}],"name":"approveAndCall","outputs":[{"name":"success","type":"bool"}],"payable":false,"stateMutability":"nonpayable","type":"function"},{"constant":true,"inputs":[],"name":"newOwner","outputs":[{"name":"","type":"address"}],"payable":false,"stateMutability":"view","type":"function"},{"constant":false,"inputs":[{"name":"tokenAddress","type":"address"},{"name":"tokens","type":"uint256"}],"name":"transferAnyERC20Token","outputs":[{"name":"success","type":"bool"}],"payable":false,"stateMutability":"nonpayable","type":"function"},{"constant":true,"inputs":[{"name":"tokenOwner","type":"address"},{"name":"spender","type":"address"}],"name":"allowance","outputs":[{"name":"remaining","type":"uint256"}],"payable":false,"stateMutability":"view","type":"function"},{"constant":false,"inputs":[{"name":"_newOwner","type":"address"}],"name":"transferOwnership","outputs":[],"payable":false,"stateMutability":"nonpayable","type":"function"},{"inputs":[],"payable":false,"stateMutability":"nonpayable","type":"constructor"},{"payable":true,"stateMutability":"payable","type":"fallback"},{"anonymous":false,"inputs":[{"indexed":true,"name":"_from","type":"address"},{"indexed":true,"name":"_to","type":"address"}],"name":"OwnershipTransferred","type":"event"},{"anonymous":false,"inputs":[{"indexed":true,"name":"from","type":"address"},{"indexed":true,"name":"to","type":"address"},{"indexed":false,"name":"tokens","type":"uint256"}],"name":"Transfer","type":"event"},{"anonymous":false,"inputs":[{"indexed":true,"name":"tokenOwner","type":"address"},{"indexed":true,"name":"spender","type":"address"},{"indexed":false,"name":"tokens","type":"uint256"}],"name":"Approval","type":"event"}];
-const ERC20_EVENT_DIC = {"0xa9059cbb":"Transfer", "0x23b872dd":"TransferFrom", "0x095ea7b3":"Approve","0xf2fde38b":"TransferOwnership"};
+const ERC20_METHOD_DIC = {"0xa9059cbb":"transfer", "0xa978501e":"transferFrom"};
+const METHOD_DIC = {
+    "0x930a61a57a70a73c2a503615b87e2e54fe5b9cdeacda518270b852296ab1a377":"Transfer(address,address,uint)",
+    "0xa9059cbb2ab09eb219583f4a59a5d0623ade346d962bcd4e46b11da047c9049b":"transfer(address,uint256)",
+    "0xa978501e4506ecbd340f6e45a48ac5bd126b1c14f03f2210837c8e0b602d4d7b":"transferFrom(address,address,uint)",
+    "0x086c40f692cc9c13988b9e49a7610f67375e8373bfe7653911770b351c2b1c54":"approve(address,uint)",
+    "0xf2fde38b092330466c661fc723d5289b90272a3e580e3187d1d7ef788506c557":"transferOwnership(address)",
+    "0x3bc50cfd0fe2c05fb67c0fe4be91fb10eb723ba30ea8f559d533fcd5fe29be7f":"Released(address,uint)"};
+
 var ContractStruct;
 
 //listen every history token in db
@@ -187,7 +196,6 @@ var checkBlockDBExistsThenWrite = function(config, blockData) {
 /**
     Break transactions out of blocks and write to DB
 **/
-
 var writeTransactionsToDB = function(config, blockData, eth) {
     var bulkOps = [];
     if (blockData.transactions.length > 0) {
@@ -204,7 +212,7 @@ var writeTransactionsToDB = function(config, blockData, eth) {
                 if(receiptData.status!=null)
                     txData.status = receiptData.status;
             }
-            if(txData.input && txData.input.length>2){//internal transaction , contract create
+            if(txData.input && txData.input.length>2){// contract create, Event logs of internal transaction
                 if(txData.to == null){//contract create
                     console.log("contract create at tx:"+txData.hash);
                     var contractdb = {}
@@ -243,38 +251,75 @@ var writeTransactionsToDB = function(config, blockData, eth) {
                         }
                     );
                 }else{//internal transaction  . write to doc of InternalTx
-                    var eventLog = {"transactionHash": "", "blockNumber": 0, "amount": 0, "contractAdd":"", "to": "", "from": "", "timestamp":0};
+                    var transferData = {"transactionHash": "", "blockNumber": 0, "amount": 0, "contractAdd":"", "to": "", "from": "", "timestamp":0};
                     var methodCode = txData.input.substr(0,10);
-                    if(methodCode=="0xa9059cbb"){//token transfer transaction
-                        eventLog.methodName = "Transfer";
-                        eventLog.to= "0x"+txData.input.substring(34,74);
-                        eventLog.amount= Number("0x"+txData.input.substring(74));
-                    }else{//other intternal transaction
-                        if(ERC20_EVENT_DIC[methodCode])
-                            eventLog.methodName = ERC20_EVENT_DIC[methodCode];
-                        eventLog.to= txData.input;//raw data save at "to"
-                    }
-                    eventLog.transactionHash= txData.hash;
-                    eventLog.blockNumber= blockData.number;
-                    eventLog.contractAdd= txData.to;
-                    eventLog.from= txData.from;
-                    eventLog.timestamp = blockData.timestamp;
-
-                    //write all type of internal transaction into db
-                    new InternalTx(eventLog).save( function( err, token, count ){
-                        if ( typeof err !== 'undefined' && err ) {
-                        if (err.code == 11000) {
-                            console.log('Skip: Duplicate tx ' + txData.hash + ': ' + err);
-                            return null;
-                        } else {
-                            console.log('Error: Aborted due to error on ' + 'block number ' + blockData.number.toString() + ': ' + err);
-                            return null;
+                    if(ERC20_METHOD_DIC[methodCode]=="transfer" || ERC20_METHOD_DIC[methodCode]=="transferFrom"){
+                        
+                        if(ERC20_METHOD_DIC[methodCode]=="transfer"){//token transfer transaction
+                            transferData.from= txData.from;
+                            transferData.to= "0x"+txData.input.substring(34,74);
+                            transferData.amount= Number("0x"+txData.input.substring(74));
+                        }else{//transferFrom
+                            transferData.from= "0x"+txData.input.substring(34,74);
+                            transferData.to= "0x"+txData.input.substring(74,114);
+                            transferData.amount= Number("0x"+txData.input.substring(114));
                         }
-                        } else {
-                            // console.log('DB successfully written for tx ' + txData.hash );  
-                        }       
+                        transferData.methodName = ERC20_METHOD_DIC[methodCode];
+                        transferData.transactionHash= txData.hash;
+                        transferData.blockNumber= blockData.number;
+                        transferData.contractAdd= txData.to;
+                        
+                        transferData.timestamp = blockData.timestamp;
+                        //write transfer transaction into db
+                        TokenTransfer.update(
+                            {transactionHash: transferData.transactionHash}, 
+                            {$setOnInsert: transferData}, 
+                            {upsert: true}, 
+                            function (err, data) {
+                                if(err)
+                                    console.log(err);
+                            }
+                        );
+                    }
+                }
+
+                //Event logs of internal transaction  . write to doc of EventLog
+                if(receiptData){
+                    logEvents = [];
+                    for(k in receiptData.logs){
+                        var logItem = receiptData.logs[k];
+                        var logEvent = {"txHash": "", "blockNumber": 0, "contractAdd":"", "from":"", "to":"", "timestamp":0, "methodName": "", "eventName":"", "logIndex":0, "topics":null, "data": ""};
+                        logEvent.logIndex = logItem.logIndex;
+                        logEvent.topics = logItem.topics;
+                        logEvent.data = logItem.data;
+                        var methodCode = txData.input.substr(0,10);
+                        if(ERC20_METHOD_DIC[methodCode])
+                            logEvent.methodName = ERC20_METHOD_DIC[methodCode];
+                        var eventCode = logItem.topics[0].substr(0,66);
+                        if(METHOD_DIC[methodCode])
+                            logEvent.eventName = METHOD_DIC[eventCode];
+                        logEvent.txHash= txData.hash;
+                        logEvent.blockNumber= blockData.number;
+                        logEvent.contractAdd= txData.to;
+                        logEvent.from= receiptData.from;
+                        logEvent.to= receiptData.to;
+                        logEvent.timestamp = blockData.timestamp;
+                        logEvents.push(logEvent);
+                    }
+                    //write all type of internal transaction into db
+                    LogEvent.collection.insert(logEvents, function( err, logE ){
+                        if ( typeof err !== 'undefined' && err ) {
+                            if (err.code == 11000) {
+                                console.log('Skip: Duplicate key ' + err);
+                            } else {
+                               console.log('Error: Aborted due to error: ' + err);
+                           }
+                        } else if(!('quiet' in config && config.quiet === true)) {
+                            console.log('DB successfully written for block ' + blockData.transactions.length.toString() );
+                        }
                     });
                 }
+                
             }else{//out transaction
                 // console.log("not contract transaction");
             }
@@ -285,17 +330,12 @@ var writeTransactionsToDB = function(config, blockData, eth) {
         Transaction.collection.insert(bulkOps, function( err, tx ){
             if ( typeof err !== 'undefined' && err ) {
                 if (err.code == 11000) {
-                    console.log('Skip: Duplicate key ' + 
-                    err);
+                    console.log('Skip: Duplicate key ' + err);
                 } else {
-                   console.log('Error: Aborted due to error: ' + 
-                        err);
-                   process.exit(9);
+                   console.log('Error: Aborted due to error: ' + err);
                }
             } else if(!('quiet' in config && config.quiet === true)) {
-                console.log('DB successfully written for block ' +
-                    blockData.transactions.length.toString() );
-                
+                console.log('DB successfully written for block ' + blockData.transactions.length.toString() );
             }
         });
     }

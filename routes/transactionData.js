@@ -9,7 +9,12 @@ module.exports = function(req, res){
       var mongoose = require( 'mongoose' );
       var Transaction = mongoose.model('Transaction');
       var isTransfer = false;//req.body.isTransfer;
-      TransactionFind = Transaction.findOne({hash:req.body.tx}).lean(true);
+      var action = req.body.action;
+      var TransactionFind;
+      if(action=="internal")
+        TransactionFind = Transaction.findOne({hash:req.body.tx}).lean(true);
+      else
+        TransactionFind = Transaction.findOne({hash:req.body.tx}).lean(true);
       TransactionFind.exec(function (err, doc) {
         if(err || !doc)//if no result in db , get from web3
         {

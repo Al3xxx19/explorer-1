@@ -98,8 +98,8 @@ angular.module('BlocksApp').controller('AddressController', function($stateParam
     $scope.internalTransaction=function(internalPage) {
       $http({
         method: 'POST',
-        url: '/internalTX',
-        data: {"action": "tokenTransfer", "address": $scope.addrHash, "internalPage":internalPage, 'fromAccount':$scope.acc}
+        url: '/transactionRelay',
+        data: {"action": "internal", "address": $scope.addrHash, "internalPage":internalPage, 'fromAccount':$scope.acc}
       }).success(function(repData) {
         repData.forEach(function(record){
           record.amount = record.amount/10**parseInt($scope.token.decimals);
@@ -107,6 +107,7 @@ angular.module('BlocksApp').controller('AddressController', function($stateParam
         $scope.internalDatas = repData;
       });
     }
+    
    
 })
 

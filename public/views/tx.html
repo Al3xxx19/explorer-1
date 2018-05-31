@@ -78,16 +78,19 @@
                 </div-->
                 <table><tbody ng-repeat="log in logs">
                     <tr><td width="20%"><b>[{{$index}}]Address </b></td><td><a href="/addr/">{{log.transactionHash}}</a></td></tr>
-                    <tr ng-show="log.methodName!=null"><td width="20%">Method</td><td>{{log.methodName}}()</td></tr>
-                    <tr><td width="20%">Data</td>
+                    <tr ng-show="log.methodName!=null"><td width="20%">Method: </td><td>{{log.methodName}}()</td></tr>
+                    <tr ng-show="log.eventName!=null && log.eventName!=''"><td width="20%">Event: </td><td>{{log.eventName}}</td></tr>
+                    <tr><td width="20%">topics:</td>
                         <td>
-                            <table><tbody><tr ng-repeat="param in log.params">
-                                <td ng-show="$index==0">(methodCode){{param}}</td>
-                                <td ng-show="$index>0">[param]{{param}}</td>
+                            <table><tbody><tr ng-repeat="topic in log.topics">
+                                <td ng-show="$index>0">[topic{{$index}}]{{topic}}</td>
                             </tr></tbody></table>
                         </td>
                     </tr>
-                    <tr><td width="20%"></td><td></td></tr>
+                    <tr><td width="20%">data:</td>
+                        <td>{{log.data}}</td>
+                    </tr>
+                    <tr><td width="20%"></td><td><br></td></tr>
                 </tbody></table>
 
             </div>

@@ -16,10 +16,11 @@ module.exports = function(app){
   var tokenListData = require('./tokenListData');
   var contractListData = require('./contractListData');
   var transactionData = require('./transactionData');
-  var internalTX = require('./tokenTransfer');
+  var tokenTransfer = require('./tokenTransfer');
   var compile = require('./compiler');
   var fiat = require('./fiat');
   var stats = require('./stats');
+  var eventLog = require('./eventLog.js')
 
   /* 
     Local DB: data request format
@@ -38,7 +39,8 @@ module.exports = function(app){
   app.post('/tokenListData', tokenListData); 
   app.post('/contractListData', contractListData); 
   app.post('/transactionRelay', transactionData); 
-  app.post('/internalTX', internalTX);
+  app.post('/tokenTransfer', tokenTransfer);
+  app.post('/eventLog', eventLog);
   app.post('/web3relay', web3relay.data);
   app.post('/compile', compile);
 

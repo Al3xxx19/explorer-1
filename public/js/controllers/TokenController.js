@@ -85,8 +85,8 @@ angular.module('BlocksApp').controller('TokenController', function($stateParams,
     $scope.internalTransaction=function(internalPage) {
       $http({
         method: 'POST',
-        url: '/internalTX',
-        data: {"action": "tokenTransfer", "address": address, "internalPage":internalPage, 'fromAccount':$scope.acc}
+        url: '/transactionRelay',
+        data: {"action": "internal", "address": address, "internalPage":internalPage, 'fromAccount':$scope.acc}
       }).success(function(repData) {
         repData.forEach(function(record){
           record.amount = record.amount/10**parseInt($scope.token.decimals);
