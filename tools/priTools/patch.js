@@ -12,6 +12,7 @@ var Block     = mongoose.model( 'Block' );
 var Transaction     = mongoose.model( 'Transaction' );
 var Contract     = mongoose.model( 'Contract' );
 var TokenTransfer = mongoose.model( 'TokenTransfer' );
+var LogEvent = mongoose.model( 'LogEvent' );
 const ERC20ABI = [{"constant":true,"inputs":[],"name":"name","outputs":[{"name":"","type":"string"}],"payable":false,"stateMutability":"view","type":"function"},{"constant":false,"inputs":[{"name":"spender","type":"address"},{"name":"tokens","type":"uint256"}],"name":"approve","outputs":[{"name":"success","type":"bool"}],"payable":false,"stateMutability":"nonpayable","type":"function"},{"constant":true,"inputs":[],"name":"totalSupply","outputs":[{"name":"","type":"uint256"}],"payable":false,"stateMutability":"view","type":"function"},{"constant":false,"inputs":[{"name":"from","type":"address"},{"name":"to","type":"address"},{"name":"tokens","type":"uint256"}],"name":"transferFrom","outputs":[{"name":"success","type":"bool"}],"payable":false,"stateMutability":"nonpayable","type":"function"},{"constant":true,"inputs":[],"name":"decimals","outputs":[{"name":"","type":"uint8"}],"payable":false,"stateMutability":"view","type":"function"},{"constant":true,"inputs":[],"name":"_totalSupply","outputs":[{"name":"","type":"uint256"}],"payable":false,"stateMutability":"view","type":"function"},{"constant":true,"inputs":[{"name":"tokenOwner","type":"address"}],"name":"balanceOf","outputs":[{"name":"balance","type":"uint256"}],"payable":false,"stateMutability":"view","type":"function"},{"constant":false,"inputs":[],"name":"acceptOwnership","outputs":[],"payable":false,"stateMutability":"nonpayable","type":"function"},{"constant":true,"inputs":[],"name":"owner","outputs":[{"name":"","type":"address"}],"payable":false,"stateMutability":"view","type":"function"},{"constant":true,"inputs":[],"name":"symbol","outputs":[{"name":"","type":"string"}],"payable":false,"stateMutability":"view","type":"function"},{"constant":false,"inputs":[{"name":"to","type":"address"},{"name":"tokens","type":"uint256"}],"name":"transfer","outputs":[{"name":"success","type":"bool"}],"payable":false,"stateMutability":"nonpayable","type":"function"},{"constant":false,"inputs":[{"name":"spender","type":"address"},{"name":"tokens","type":"uint256"},{"name":"data","type":"bytes"}],"name":"approveAndCall","outputs":[{"name":"success","type":"bool"}],"payable":false,"stateMutability":"nonpayable","type":"function"},{"constant":true,"inputs":[],"name":"newOwner","outputs":[{"name":"","type":"address"}],"payable":false,"stateMutability":"view","type":"function"},{"constant":false,"inputs":[{"name":"tokenAddress","type":"address"},{"name":"tokens","type":"uint256"}],"name":"transferAnyERC20Token","outputs":[{"name":"success","type":"bool"}],"payable":false,"stateMutability":"nonpayable","type":"function"},{"constant":true,"inputs":[{"name":"tokenOwner","type":"address"},{"name":"spender","type":"address"}],"name":"allowance","outputs":[{"name":"remaining","type":"uint256"}],"payable":false,"stateMutability":"view","type":"function"},{"constant":false,"inputs":[{"name":"_newOwner","type":"address"}],"name":"transferOwnership","outputs":[],"payable":false,"stateMutability":"nonpayable","type":"function"},{"inputs":[],"payable":false,"stateMutability":"nonpayable","type":"constructor"},{"payable":true,"stateMutability":"payable","type":"fallback"},{"anonymous":false,"inputs":[{"indexed":true,"name":"_from","type":"address"},{"indexed":true,"name":"_to","type":"address"}],"name":"OwnershipTransferred","type":"event"},{"anonymous":false,"inputs":[{"indexed":true,"name":"from","type":"address"},{"indexed":true,"name":"to","type":"address"},{"indexed":false,"name":"tokens","type":"uint256"}],"name":"Transfer","type":"event"},{"anonymous":false,"inputs":[{"indexed":true,"name":"tokenOwner","type":"address"},{"indexed":true,"name":"spender","type":"address"},{"indexed":false,"name":"tokens","type":"uint256"}],"name":"Approval","type":"event"}];
 const ERC20_METHOD_DIC = {"0xa9059cbb":"transfer", "0xa978501e":"transferFrom"};
 const METHOD_DIC = {
@@ -20,7 +21,9 @@ const METHOD_DIC = {
     "0xa978501e4506ecbd340f6e45a48ac5bd126b1c14f03f2210837c8e0b602d4d7b":"transferFrom(address,address,uint)",
     "0x086c40f692cc9c13988b9e49a7610f67375e8373bfe7653911770b351c2b1c54":"approve(address,uint)",
     "0xf2fde38b092330466c661fc723d5289b90272a3e580e3187d1d7ef788506c557":"transferOwnership(address)",
-    "0x3bc50cfd0fe2c05fb67c0fe4be91fb10eb723ba30ea8f559d533fcd5fe29be7f":"Released(address,uint)"};
+    "0x3bc50cfd0fe2c05fb67c0fe4be91fb10eb723ba30ea8f559d533fcd5fe29be7f":"Released(address,uint)",
+    "0xb21fb52d5749b80f3182f8c6992236b5e5576681880914484d7f4c9b062e619e":"Released(address indexed, uint indexed)"
+};
 
 //modify according to your actual situation.
 var config3 = {
@@ -201,44 +204,52 @@ var writeTransactionsToDB3 = function(blockData, eth) {
                     }
                 }
 
-                //Event logs of internal transaction  . write to doc of LogEvent
-                if(receiptData){
-                    logEvents = [];
-                    for(k in receiptData.logs){
-                        var logItem = receiptData.logs[k];
-                        var logEvent = {"txHash": "", "blockNumber": 0, "contractAdd":"", "from":"", "to":"", "timestamp":0, "methodName": "", "eventName":"", "logIndex":0, "topics":null, "data": ""};
-                        logEvent.logIndex = logItem.logIndex;
-                        logEvent.topics = logItem.topics;
-                        logEvent.data = logItem.data;
-                        var methodCode = txData.input.substr(0,10);
-                        if(ERC20_METHOD_DIC[methodCode])
-                            logEvent.methodName = ERC20_METHOD_DIC[methodCode];
-                        var eventCode = logItem.topics[0].substr(0,66);
-                        if(METHOD_DIC[methodCode])
-                            logEvent.eventName = METHOD_DIC[eventCode];
-                        logEvent.txHash= txData.hash;
-                        logEvent.blockNumber= blockData.number;
-                        logEvent.contractAdd= txData.to;
-                        logEvent.from= receiptData.from;
-                        logEvent.to= receiptData.to;
-                        logEvent.timestamp = blockData.timestamp;
-                        logEvents.push(logEvent);
-                    }
-                    //write all type of internal transaction into db
-                    LogEvent.collection.insert(logEvents, function( err, logE ){
-                        if ( typeof err !== 'undefined' && err ) {
-                            if (err.code == 11000) {
-                                console.log('Skip: Duplicate key ' + err);
-                            } else {
-                               console.log('Error: Aborted due to error: ' + err);
-                           }
-                        } else if(!('quiet' in config && config.quiet === true)) {
-                            console.log('DB successfully written for block ' + blockData.transactions.length.toString() );
-                        }
-                    });
-                }
             }else{//out transaction
                 // console.log("not contract transaction");
+            }
+
+            //Event logs of internal transaction  . write to doc of EventLog
+            if(receiptData){
+                logEvents = [];
+                for(k in receiptData.logs){
+                    var logItem = receiptData.logs[k];
+                    var logEvent = {"txHash": "", "blockNumber": 0, "contractAdd":"", "from":"", "to":"", "timestamp":0, "methodName": "", "eventName":"", "logIndex":0, "topics":null, "data": ""};
+                    logEvent.logIndex = logItem.logIndex;
+                    logEvent.topics = logItem.topics;
+                    logEvent.data = logItem.data;
+                    var methodCode = txData.input.substr(0,10);
+                    if(ERC20_METHOD_DIC[methodCode])
+                        logEvent.methodName = ERC20_METHOD_DIC[methodCode];
+                    var eventCode = logItem.topics[0].substr(0,66);
+                    if(METHOD_DIC[eventCode])
+                        logEvent.eventName = METHOD_DIC[eventCode];
+                    logEvent.txHash= txData.hash;
+                    logEvent.blockNumber= blockData.number;
+                    logEvent.contractAdd= txData.to;
+                    logEvent.from= receiptData.from;
+                    logEvent.to= receiptData.to;
+                    logEvent.timestamp = blockData.timestamp;
+                    logEvents.push(logEvent);
+
+                    //deal with Released
+                    if(logEvent.eventName.indexOf("Released(")==0){
+                        txData.from = txData.to;
+                        txData.to = "0x"+logEvent.topics[1].substr(26);
+                        txData.value = etherUnits.toEther(new BigNumber(logEvent.topics[2]), 'wei');
+                    }
+                }
+                //write all type of internal transaction into db
+                LogEvent.collection.insert(logEvents, function( err, logE ){
+                    if ( typeof err !== 'undefined' && err ) {
+                        if (err.code == 11000) {
+                            console.log('Skip: Duplicate key ' + err);
+                        } else {
+                           console.log('Error: Aborted due to error: ' + err);
+                       }
+                    } else if(!('quiet' in config3 && config3.quiet === true)) {
+                        console.log('DB successfully written for block ' + blockData.transactions.length.toString() );
+                    }
+                });
             }
 
             bulkOps.push(txData);
@@ -311,7 +322,7 @@ var tryNextBlock = function() {
 
 
 
-const ERC20ABI = [{"constant":true,"inputs":[],"name":"name","outputs":[{"name":"","type":"string"}],"payable":false,"stateMutability":"view","type":"function"},{"constant":false,"inputs":[{"name":"_spender","type":"address"},{"name":"_value","type":"uint256"}],"name":"approve","outputs":[{"name":"success","type":"bool"}],"payable":false,"stateMutability":"nonpayable","type":"function"},{"constant":true,"inputs":[],"name":"totalSupply","outputs":[{"name":"","type":"uint256"}],"payable":false,"stateMutability":"view","type":"function"},{"constant":false,"inputs":[{"name":"_from","type":"address"},{"name":"_to","type":"address"},{"name":"_value","type":"uint256"}],"name":"transferFrom","outputs":[{"name":"success","type":"bool"}],"payable":false,"stateMutability":"nonpayable","type":"function"},{"constant":true,"inputs":[],"name":"decimals","outputs":[{"name":"","type":"uint8"}],"payable":false,"stateMutability":"view","type":"function"},{"constant":true,"inputs":[{"name":"_owner","type":"address"}],"name":"balanceOf","outputs":[{"name":"balance","type":"uint256"}],"payable":false,"stateMutability":"view","type":"function"},{"constant":true,"inputs":[],"name":"symbol","outputs":[{"name":"","type":"string"}],"payable":false,"stateMutability":"view","type":"function"},{"constant":false,"inputs":[{"name":"_to","type":"address"},{"name":"_value","type":"uint256"}],"name":"transfer","outputs":[{"name":"success","type":"bool"}],"payable":false,"stateMutability":"nonpayable","type":"function"},{"anonymous":false,"inputs":[{"indexed":true,"name":"_from","type":"address"},{"indexed":true,"name":"_to","type":"address"},{"indexed":false,"name":"_value","type":"uint256"}],"name":"Transfer","type":"event"},{"anonymous":false,"inputs":[{"indexed":true,"name":"_owner","type":"address"},{"indexed":true,"name":"_spender","type":"address"},{"indexed":false,"name":"_value","type":"uint256"}],"name":"Approval","type":"event"}];
+
 var ContractStruct;
 var currentBlock;
 

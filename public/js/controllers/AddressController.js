@@ -42,7 +42,7 @@ angular.module('BlocksApp').controller('AddressController', function($stateParam
       $scope.addr.ethfiat = data.balance;
     });
 
-    //fetch transactions
+    //fetch all transactions
     var fetchTxs = function(count) {
       $("#table_txs").DataTable({
         processing: true,
@@ -94,12 +94,26 @@ angular.module('BlocksApp').controller('AddressController', function($stateParam
     }
 
     
+    // $scope.internalPage = 0;
+    // $scope.internalTransaction=function(internalPage) {
+    //   $http({
+    //     method: 'POST',
+    //     url: '/transactionRelay',
+    //     data: {"action": "internalTx", "address": $scope.addrHash, "internalPage":internalPage, 'fromAccount':$scope.acc}
+    //   }).success(function(repData) {
+    //     repData.forEach(function(record){
+    //       record.amount = record.amount/10**parseInt($scope.token.decimals);
+    //     })
+    //     $scope.internalDatas = repData;
+    //   });
+    // }
+
     $scope.internalPage = 0;
     $scope.internalTransaction=function(internalPage) {
       $http({
         method: 'POST',
         url: '/transactionRelay',
-        data: {"action": "internal", "address": $scope.addrHash, "internalPage":internalPage, 'fromAccount':$scope.acc}
+        data: {"action": "internalTX", "address": $scope.addrHash, "internalPage":internalPage, 'fromAccount':$scope.acc}
       }).success(function(repData) {
         repData.forEach(function(record){
           record.amount = record.amount/10**parseInt($scope.token.decimals);
@@ -107,6 +121,7 @@ angular.module('BlocksApp').controller('AddressController', function($stateParam
         $scope.internalDatas = repData;
       });
     }
+
     
    
 })

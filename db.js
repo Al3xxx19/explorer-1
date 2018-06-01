@@ -76,6 +76,23 @@ var TokenTransfer = new Schema(
 mongoose.model('TokenTransfer', TokenTransfer);
 var TokenTransferClass = mongoose.model('TokenTransfer');
 
+//内部交易事件表
+var LogEvent = new Schema(
+    {
+        "txHash": String,
+        "blockNumber": Number,
+        "contractAdd": String,
+        "timestamp": Number,
+        "methodName": String,
+        "eventName": String,
+        "from": String,
+        "to": String,
+        "logIndex": Number,
+        "topics": Array,
+        "data": String
+    });
+mongoose.model('LogEvent', LogEvent);
+
 mongoose.model('Block', Block);
 mongoose.model('Contract', Contract);
 mongoose.model('Transaction', Transaction);
@@ -83,6 +100,7 @@ module.exports.Block = mongoose.model('Block');
 module.exports.Contract = mongoose.model('Contract');
 module.exports.Transaction = mongoose.model('Transaction');
 module.exports.TokenTransfer = TokenTransferClass;
+module.exports.LogEvent = mongoose.model('LogEvent');
 
 mongoose.connect( 'mongodb://localhost/blockDB' );
 mongoose.set('debug', false);

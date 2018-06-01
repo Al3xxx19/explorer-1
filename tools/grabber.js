@@ -21,7 +21,9 @@ const METHOD_DIC = {
     "0xa978501e4506ecbd340f6e45a48ac5bd126b1c14f03f2210837c8e0b602d4d7b":"transferFrom(address,address,uint)",
     "0x086c40f692cc9c13988b9e49a7610f67375e8373bfe7653911770b351c2b1c54":"approve(address,uint)",
     "0xf2fde38b092330466c661fc723d5289b90272a3e580e3187d1d7ef788506c557":"transferOwnership(address)",
-    "0x3bc50cfd0fe2c05fb67c0fe4be91fb10eb723ba30ea8f559d533fcd5fe29be7f":"Released(address,uint)"};
+    "0x3bc50cfd0fe2c05fb67c0fe4be91fb10eb723ba30ea8f559d533fcd5fe29be7f":"Released(address,uint)",
+    "0xb21fb52d5749b80f3182f8c6992236b5e5576681880914484d7f4c9b062e619e":"Released(address indexed, uint indexed)"
+};
 
 var ContractStruct;
 
@@ -254,7 +256,6 @@ var writeTransactionsToDB = function(config, blockData, eth) {
                     var transferData = {"transactionHash": "", "blockNumber": 0, "amount": 0, "contractAdd":"", "to": "", "from": "", "timestamp":0};
                     var methodCode = txData.input.substr(0,10);
                     if(ERC20_METHOD_DIC[methodCode]=="transfer" || ERC20_METHOD_DIC[methodCode]=="transferFrom"){
-                        
                         if(ERC20_METHOD_DIC[methodCode]=="transfer"){//token transfer transaction
                             transferData.from= txData.from;
                             transferData.to= "0x"+txData.input.substring(34,74);
@@ -283,45 +284,52 @@ var writeTransactionsToDB = function(config, blockData, eth) {
                     }
                 }
 
-                //Event logs of internal transaction  . write to doc of EventLog
-                if(receiptData){
-                    logEvents = [];
-                    for(k in receiptData.logs){
-                        var logItem = receiptData.logs[k];
-                        var logEvent = {"txHash": "", "blockNumber": 0, "contractAdd":"", "from":"", "to":"", "timestamp":0, "methodName": "", "eventName":"", "logIndex":0, "topics":null, "data": ""};
-                        logEvent.logIndex = logItem.logIndex;
-                        logEvent.topics = logItem.topics;
-                        logEvent.data = logItem.data;
-                        var methodCode = txData.input.substr(0,10);
-                        if(ERC20_METHOD_DIC[methodCode])
-                            logEvent.methodName = ERC20_METHOD_DIC[methodCode];
-                        var eventCode = logItem.topics[0].substr(0,66);
-                        if(METHOD_DIC[methodCode])
-                            logEvent.eventName = METHOD_DIC[eventCode];
-                        logEvent.txHash= txData.hash;
-                        logEvent.blockNumber= blockData.number;
-                        logEvent.contractAdd= txData.to;
-                        logEvent.from= receiptData.from;
-                        logEvent.to= receiptData.to;
-                        logEvent.timestamp = blockData.timestamp;
-                        logEvents.push(logEvent);
-                    }
-                    //write all type of internal transaction into db
-                    LogEvent.collection.insert(logEvents, function( err, logE ){
-                        if ( typeof err !== 'undefined' && err ) {
-                            if (err.code == 11000) {
-                                console.log('Skip: Duplicate key ' + err);
-                            } else {
-                               console.log('Error: Aborted due to error: ' + err);
-                           }
-                        } else if(!('quiet' in config && config.quiet === true)) {
-                            console.log('DB successfully written for block ' + blockData.transactions.length.toString() );
-                        }
-                    });
-                }
-                
             }else{//out transaction
                 // console.log("not contract transaction");
+            }
+
+            //Event logs of internal transaction  . write to doc of EventLog
+            if(receiptData){
+                logEvents = [];
+                for(k in receiptData.logs){
+                    var logItem = receiptData.logs[k];
+                    var logEvent = {"txHash": "", "blockNumber": 0, "contractAdd":"", "from":"", "to":"", "timestamp":0, "methodName": "", "eventName":"", "logIndex":0, "topics":null, "data": ""};
+                    logEvent.logIndex = logItem.logIndex;
+                    logEvent.topics = logItem.topics;
+                    logEvent.data = logItem.data;
+                    var methodCode = txData.input.substr(0,10);
+                    if(ERC20_METHOD_DIC[methodCode])
+                        logEvent.methodName = ERC20_METHOD_DIC[methodCode];
+                    var eventCode = logItem.topics[0].substr(0,66);
+                    if(METHOD_DIC[eventCode])
+                        logEvent.eventName = METHOD_DIC[eventCode];
+                    logEvent.txHash= txData.hash;
+                    logEvent.blockNumber= blockData.number;
+                    logEvent.contractAdd= txData.to;
+                    logEvent.from= receiptData.from;
+                    logEvent.to= receiptData.to;
+                    logEvent.timestamp = blockData.timestamp;
+                    logEvents.push(logEvent);
+
+                    //deal with Released
+                    if(logEvent.eventName.indexOf("Released(")==0){
+                        txData.from = txData.to;
+                        txData.to = "0x"+logEvent.topics[1].substr(26);
+                        txData.value = etherUnits.toEther(new BigNumber(logEvent.topics[2]), 'wei');
+                    }
+                }
+                //write all type of internal transaction into db
+                LogEvent.collection.insert(logEvents, function( err, logE ){
+                    if ( typeof err !== 'undefined' && err ) {
+                        if (err.code == 11000) {
+                            console.log('Skip: Duplicate key ' + err);
+                        } else {
+                           console.log('Error: Aborted due to error: ' + err);
+                       }
+                    } else if(!('quiet' in config && config.quiet === true)) {
+                        console.log('DB successfully written for block ' + blockData.transactions.length.toString() );
+                    }
+                });
             }
 
             bulkOps.push(txData);
