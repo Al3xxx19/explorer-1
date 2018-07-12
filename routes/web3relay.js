@@ -27,8 +27,12 @@ else
   throw "No connection";
 
 
-var newBlocks = web3.eth.filter("latest");
-var newTxs = web3.eth.filter("pending");
+// var newBlocks = web3.eth.filter("latest");
+// var newTxs = web3.eth.filter("pending");
+exports.getTX = function(txHash){
+  var txData = web3.eth.getTransaction(txHash);
+  return txData;
+}
 
 exports.data = function(req, res){
   console.log(req.body)

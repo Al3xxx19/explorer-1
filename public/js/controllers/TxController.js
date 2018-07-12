@@ -54,21 +54,21 @@ angular.module('BlocksApp').controller('TxController', function($stateParams, $r
       });      
     }
 
-    var splitParam = function(paramsStr){
-      var params = [];
-      var step = 0;
-      var addNum;
-      for(var i=0; i<paramsStr.length; i=i+addNum){
-        if(i==0){
-          params.push(paramsStr.substr(0, 10));
-          addNum=10;
-        }
-        else{
-          params.push(paramsStr.substr(10+(step-1)*64, 64));
-          addNum=64;
-        }
-        step++;
-      }
-      return params;
-    }
+    // var splitParam = function(paramsStr){
+    //   var params = [];
+    //   var step = 0;
+    //   var addNum;
+    //   for(var i=0; i<paramsStr.length; i=i+addNum){
+    //     if(i==0){
+    //       params.push(paramsStr.substr(0, 10));
+    //       addNum=10;
+    //     }
+    //     else{
+    //       params.push(paramsStr.substr(10+(step-1)*64, 64));
+    //       addNum=64;
+    //     }
+    //     step++;
+    //   }
+    //   return params;
+    // }
 })

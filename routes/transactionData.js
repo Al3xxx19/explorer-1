@@ -1,6 +1,7 @@
 #!/usr/bin/env node
 // var etherUnits = require("../lib/etherUnits.js");
 // var BigNumber = require('bignumber.js');
+var web3relay = require('./web3relay');
 const transferMethodFlag = "0xa9059cbb000000000000000000000000";
 module.exports = function(req, res){
   var respData = "";
@@ -34,11 +35,20 @@ module.exports = function(req, res){
         res.end();
         });
       }else{//some tx
-        TransactionFind = Transaction.findOne({hash:req.body.tx}).lean(true);
+        var txHash = req.body.tx;
+        //check TX exist in node
+        var txData = web3relay.getTX(txHash);
+        if(txData==null){
+          res.write("{}");
+          res.end();
+          return;
+        }
+
+        TransactionFind = Transaction.findOne({hash:txHash}).lean(true);
         TransactionFind.exec(function (err, doc) {
           if(err || !doc)//if no result in db , get from web3
           {
-            require('./web3relay').data(req, res);
+            web3relay.data(req, res);
             return;
           }
           
