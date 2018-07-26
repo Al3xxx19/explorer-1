@@ -46,7 +46,7 @@ var listenHistoryToken = function(){
 }
 
 var grabBlocks = function(config) {
-    web3 = new Web3(new Web3.providers.HttpProvider('http://localhost:' + config.gethPort.toString()));
+    web3 = new Web3(new Web3.providers.HttpProvider(config.rpc));
     TokenTransferGrabber.Init(web3.eth);
     ContractStruct = web3.eth.contract(ERC20ABI);
     // listenHistoryToken();
@@ -353,8 +353,7 @@ var writeTransactionsToDB = function(config, blockData, eth) {
   Patch Missing Blocks
 */
 var patchBlocks = function(config) {
-    // var web3 = new Web3(new Web3.providers.HttpProvider('http://rpc.etherzero.org:' + config.gethPort.toString()));
-    var web3 = new Web3(new Web3.providers.HttpProvider('http://localhost:' + config.gethPort.toString()));
+    var web3 = new Web3(new Web3.providers.HttpProvider(config.rpc));
 
     // number of blocks should equal difference in block numbers
     var firstBlock = 0;
@@ -397,7 +396,8 @@ var blockIter = function(web3, firstBlock, lastBlock, config) {
 
 
 var config = {
-    "gethPort": 9646,
+    // "rpc": 'http://localhost:9646',
+    "rpc": 'http://rpc.etherzero.org/',
     // "blocks": [ {"start": 0, "end": "latest"}],
     "blocks": [ {"start": 4936270, "end": "latest"}],//ttt
     "quiet": true,
