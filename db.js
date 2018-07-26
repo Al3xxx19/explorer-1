@@ -102,5 +102,5 @@ module.exports.Transaction = mongoose.model('Transaction');
 module.exports.TokenTransfer = TokenTransferClass;
 module.exports.LogEvent = mongoose.model('LogEvent');
 
-mongoose.connect( 'mongodb://localhost/blockDB' );
+mongoose.connect( 'mongodb://localhost/blockDB2' );
 mongoose.set('debug', false);
