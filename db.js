@@ -20,8 +20,18 @@ var Block = new Schema(
     "gasLimit": Number,
     "gasUsed": Number,
     "timestamp": Number,
-    "uncles": [String]
+    "uncles": [String],
+    "txs": [String],
+    "witness": String
 });
+
+//master node Info
+var Witness = new Schema(
+    {
+        "blocksNum": Number,
+        "lastCountTo": Number,
+        "witness": String
+    });
 
 var Contract = new Schema(
 {
@@ -58,7 +68,8 @@ var Transaction = new Schema(
     "gasUsed":Number,
     "gasPrice": String,
     "timestamp": Number,
-    "input": String
+    "input": String,
+    "witness": String
 });
 
 //代币交易表
@@ -96,10 +107,12 @@ mongoose.model('LogEvent', LogEvent);
 mongoose.model('Block', Block);
 mongoose.model('Contract', Contract);
 mongoose.model('Transaction', Transaction);
+mongoose.model('Witness', Witness);
 module.exports.Block = mongoose.model('Block');
 module.exports.Contract = mongoose.model('Contract');
 module.exports.Transaction = mongoose.model('Transaction');
 module.exports.TokenTransfer = TokenTransferClass;
+module.exports.Witness = Witness;
 module.exports.LogEvent = mongoose.model('LogEvent');
 
 mongoose.connect( 'mongodb://localhost/blockDB' );

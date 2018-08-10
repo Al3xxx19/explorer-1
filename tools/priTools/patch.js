@@ -27,9 +27,9 @@ const METHOD_DIC = {
 
 //modify according to your actual situation.
 var config3 = {
-    "httpProvider":"http://localhost:9646",
-    "patchStartBlocks": 4936270,//1
-    "patchEndBlocks": "latest",//5485123,//600
+    "httpProvider":"http://localhost:8545",
+    "patchStartBlocks": 1,//1
+    "patchEndBlocks": 394905,//"latest",//5485123,//600
     "quiet": true,
     "terminateAtExistingDB": false
 };
@@ -75,6 +75,12 @@ var grabBlock3 = function() {
 
 
 var writeBlockToDB3 = function(blockData) {
+    //only save address for transaction info
+    blockData.txs = [];
+    for(var i=0; i<blockData.transactions.length; i++){
+        blockData.txs.push(blockData.transactions[i].hash);
+    }
+    //write block to db
     return new Block(blockData).save( function( err, block, count ){
         if ( typeof err !== 'undefined' && err ) {
             if (err.code == 11000) {
@@ -123,6 +129,7 @@ var writeTransactionsToDB3 = function(blockData, eth) {
         for (d in blockData.transactions) {
             var txData = blockData.transactions[d];
             txData.timestamp = blockData.timestamp;
+            txData.witness = blockData.witness;
             txData.gasPrice = etherUnits.toEther(new BigNumber(txData.gasPrice), 'ether');
             txData.value = etherUnits.toEther(new BigNumber(txData.value), 'wei');
             //receipt

@@ -18,8 +18,7 @@ var filterTrace = require('./filters').filterTrace;
 if (typeof web3 !== "undefined") {
   web3 = new Web3(web3.currentProvider);
 } else {
-  // web3 = new Web3(new Web3.providers.HttpProvider("http://localhost:9646"));
-  web3 = new Web3(new Web3.providers.HttpProvider("http://rpc.etherzero.org/"));
+  web3 = new Web3(new Web3.providers.HttpProvider("http://localhost:8545"));
 }
 
 
@@ -37,8 +36,8 @@ exports.getTX = function(txHash){
 }
 
 exports.data = function(req, res){
-  console.log(req.body)
-
+  //console.log("web3relay data :"+req.client.remoteAddress+":"+req.client.remotePort);
+  
   if ("tx" in req.body) {
     var txHash = req.body.tx.toLowerCase();
 
@@ -64,7 +63,6 @@ exports.data = function(req, res){
 
   } else if ("tx_trace" in req.body) {
     var txHash = req.body.tx_trace.toLowerCase();
-
     web3.trace.transaction(txHash, function(err, tx) {
       if(err || !tx) {
         console.error("TraceWeb3 error :" + err)
@@ -126,12 +124,15 @@ exports.data = function(req, res){
       }
     }
     if (options.indexOf("count") > -1) {
-      try {
-         addrData["count"] = web3.eth.getTransactionCount(addr);
-      } catch (err) {
-        console.error("AddrWeb3 error :" + err);
-        addrData = {"error": true};
-      }
+      // 'count' calculating is turned to db 
+      // try {
+      //    addrData["count"] = web3.eth.getTransactionCount(addr);
+      //    console.log("count:"+addrData["count"]);
+      // } catch (err) {
+      //   console.error("AddrWeb3 error :" + err);
+      //   addrData = {"error": true};
+      // }
+      addrData["count"] = 1;
     }
     
    

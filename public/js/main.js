@@ -63,6 +63,8 @@ BlocksApp.controller('HeaderController', ['$scope', '$location', function($scope
         $scope.form.searchForm.$setUntouched();
         if (isAddress(search)) 
             $location.path("/addr/" + search);
+        else if(search.length==16)//master node address
+            $location.path("/witness/" + search);
         else if (isTransaction(search))
             $location.path("/tx/" + search);
         else if (!isNaN(search))
@@ -314,6 +316,40 @@ BlocksApp.config(['$stateProvider', '$urlRouterProvider', function($stateProvide
             }
         })
 
+        .state('witness', {
+            url: "/witness/{witness}",
+            templateUrl: "views/witness.html",
+            data: {pageTitle: 'witness'},
+            controller: "WitnessController",
+            resolve: {
+                deps: ['$ocLazyLoad', function($ocLazyLoad) {
+                    return $ocLazyLoad.load({
+                        name: 'BlocksApp',
+                        insertBefore: '#ng_load_plugins_before', 
+                        files: [
+                             '/js/controllers/WitnessController.js'
+                        ]
+                    });
+                }]
+            }
+        })
+        .state('witnessList', {
+            url: "/witnessList",
+            templateUrl: "views/witnessList.html",
+            data: {pageTitle: 'witness'},
+            controller: "WitnessListController",
+            resolve: {
+                deps: ['$ocLazyLoad', function($ocLazyLoad) {
+                    return $ocLazyLoad.load({
+                        name: 'BlocksApp',
+                        insertBefore: '#ng_load_plugins_before', 
+                        files: [
+                             '/js/controllers/WitnessListController.js'
+                        ]
+                    });
+                }]
+            }
+        })
         .state('dao', {
             url: "/dao",
             templateUrl: "views/dao.html",

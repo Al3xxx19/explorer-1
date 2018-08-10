@@ -41,6 +41,7 @@
                     <tr ><td width="25%">GasPrice:</td><td>{{tx.gasPrice}}</td></tr>
                     <tr ><td width="25%">GasUsed:</td><td>{{tx.gasUsed}}</td></tr>
                     <tr ><td width="25%">Nonce:</td><td>{{tx.nonce}}</td></tr>
+                    <tr ><td width="25%">witness:</td><td><a href="/witness/{{tx.witness}}">{{tx.witness}}</a></td></tr>
                     <tr ><td width="25%">Input Data:</td><td><pre class="code">{{tx.input}}</pre></td></tr>
                 </table>
                 <table class="table table-condensed" ng-show="tx.isTrace">

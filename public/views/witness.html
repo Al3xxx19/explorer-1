@@ -1,0 +1,48 @@
+<!-- BEGIN PAGE CONTENT-->
+<div class="row">
+
+        <table>
+          <tr ><td width="25%" height="30">ETZ Balance </td> <td><span class="eth-stat-text">{{ balance | number: 10 }}</span></td></tr>
+          <tr ><td width="25%" height="30">total blocks</td> <td><span class="eth-stat-text">{{totalBlocks}}</span></td></tr>
+          <tr ><td width="25%" height="30"> </td> <td><span class="eth-stat-text"> </span></td></tr>
+        </table>
+
+
+
+    <!-- Begin: blocks Datatable -->
+    <div class="tab-pane" id="tab_addr_1" ng-class="{active: activeTab == 'tab_addr_1'}">
+            <div class="table-scrollable">
+                <table class="table table-condensed">
+                    <thead>
+                        <tr>
+                            <th> Height </th>
+                            <th> Time </th>
+                            <th> Gas(wei)</th>
+                            <th> Hash </th>
+                            <th> Mined By </th>
+                            
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <tr ng-repeat="block in blocks track by $index">
+                            <td> <a href="/block/{{block.number}}">{{block.number}}</a> </td>
+                            <td>{{block.datetime | date:'yyyy-MM-dd HH:mm:ss Z' }} ({{block.timestamp | timeDuration}} ago)</td>
+                            <td>{{block.gasUsed | number}}</td>
+                            <td >{{block.hash}}</td>
+                            <td><a href="/addr/{{block.miner}}">{{block.miner}}</a></td>
+                            
+                        </tr>
+                    </tbody>
+                </table>
+                <ul class="pager">
+                    <li class="previous">
+                        <a ng-click="switchPage(page-1)"> ← Newer </a>
+                    </li>
+                    <li class="next">
+                        <a ng-click="switchPage(page+1)"> Older → </a>
+                    </li>
+                </ul>
+              </div>
+          </div><!-- end mine Tab -->
+  
+</div>

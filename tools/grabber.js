@@ -156,6 +156,12 @@ var grabBlock = function(config, web3, blockHashOrNumber) {
 
 
 var writeBlockToDB = function(config, blockData) {
+    //only save address for transaction info
+    blockData.txs = [];
+    for(var i=0; i<blockData.transactions.length; i++){
+        blockData.txs.push(blockData.transactions[i].hash);
+    }
+    //write block to db
     return new Block(blockData).save( function( err, block, count ){
         if ( typeof err !== 'undefined' && err ) {
             if (err.code == 11000) {
@@ -204,6 +210,7 @@ var writeTransactionsToDB = function(config, blockData, eth) {
         for (d in blockData.transactions) {
             var txData = blockData.transactions[d];
             txData.timestamp = blockData.timestamp;
+            txData.witness = blockData.witness;
             txData.gasPrice = etherUnits.toEther(new BigNumber(txData.gasPrice), 'ether');
             txData.value = etherUnits.toEther(new BigNumber(txData.value), 'wei');
             //receipt
@@ -396,10 +403,9 @@ var blockIter = function(web3, firstBlock, lastBlock, config) {
 
 
 var config = {
-    // "rpc": 'http://localhost:9646',
-    "rpc": 'http://rpc.etherzero.org/',
-    // "blocks": [ {"start": 0, "end": "latest"}],
-    "blocks": [ {"start": 4936270, "end": "latest"}],//ttt
+    "rpc": 'http://localhost:8545',
+    "blocks": [ {"start": 0, "end": "latest"}],
+    // "blocks": [ {"start": 4936270, "end": "latest"}],//ttt
     "quiet": true,
     "terminateAtExistingDB": false,
     "listenOnly": true,

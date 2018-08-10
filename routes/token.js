@@ -70,63 +70,66 @@ module.exports = function(req, res){
       var Contract   = mongoose.model( 'Contract' );
       var tokenData;
       var count = 0;
-      Transaction.count({'to':contractAddress}).exec().then(function(result){count = result});
-      var contractFind = Contract.findOne({address:contractAddress}).lean(true);
-      contractFind.exec(function(err, doc){
-        if(!err && doc){
-          var dbToken = doc;
-          tokenData = {
-            "balance": dbToken.balance,
-            "totalSupply": dbToken.totalSupply/10**dbToken.decimals,//dbToken.totalSupply.toEther(actualBalance, 'wei');
-            "tokenHolders": 2,//tt fix, wait to dev
-            "count": count,
-            "name": dbToken.tokenName,
-            "ERC":dbToken.ERC,
-            "symbol": dbToken.symbol,
-            "bytecode": dbToken.byteCode,
-            "transaction": dbToken.creationTransaction,
-            "creator": dbToken.owner,
-            "decimals": dbToken.decimals,
-            "isVerified":dbToken.sourceCode!=null
-          }
-          if(fromAccount){
-            var eth = require('./web3relay').eth;
-            var ContractStruct = eth.contract(ABI);
-            var TokenInst = ContractStruct.at(contractAddress);
-            tokenData.tokenNum = TokenInst.balanceOf(fromAccount);
-          }
-          res.write(JSON.stringify(tokenData));
-          res.end();
-        }else{//find from blockChain
-          var data ={};
-          var eth = require('./web3relay').eth;
-          var bytecode;
-          try{
-            data.balance = eth.getBalance(contractAddress);
-            bytecode = eth.getCode(contractAddress);
-          }catch(err){
-            console.log(err);
-          }
-          data.byteCode = bytecode;
-          var txFind = Transaction.findOne({'to':null, 'contractAddress':contractAddress}).lean(true);
-          txFind.exec(function (err, doc) {
-            if(!err && doc){
-              data.creationTransaction = doc.hash;
-              data.owner = doc.from;
-            }
+      Transaction.count({$or: [{"to": contractAddress}, {"from": contractAddress}] }).exec().then(function(result){
+        count = result
+        var contractFind = Contract.findOne({address:contractAddress}).lean(true);
+        contractFind.exec(function(err, doc){
+          if(!err && doc){
+            var dbToken = doc;
             tokenData = {
-              "balance": data.balance,
+              "balance": dbToken.balance,
+              "totalSupply": dbToken.totalSupply/10**dbToken.decimals,//dbToken.totalSupply.toEther(actualBalance, 'wei');
               "tokenHolders": 2,//tt fix, wait to dev
               "count": count,
-              "transaction": data.creationTransaction,
-              "creator": data.owner,
-              "isVerified":false
+              "name": dbToken.tokenName,
+              "ERC":dbToken.ERC,
+              "symbol": dbToken.symbol,
+              "bytecode": dbToken.byteCode,
+              "transaction": dbToken.creationTransaction,
+              "creator": dbToken.owner,
+              "decimals": dbToken.decimals,
+              "isVerified":dbToken.sourceCode!=null
+            }
+            if(fromAccount){
+              var eth = require('./web3relay').eth;
+              var ContractStruct = eth.contract(ABI);
+              var TokenInst = ContractStruct.at(contractAddress);
+              tokenData.tokenNum = TokenInst.balanceOf(fromAccount);
             }
             res.write(JSON.stringify(tokenData));
             res.end();
-          })
-        }
-      })
+          }else{//find from blockChain
+            var data ={};
+            var eth = require('./web3relay').eth;
+            var bytecode;
+            try{
+              data.balance = eth.getBalance(contractAddress);
+              bytecode = eth.getCode(contractAddress);
+            }catch(err){
+              console.log(err);
+            }
+            data.byteCode = bytecode;
+            var txFind = Transaction.findOne({'to':null, 'contractAddress':contractAddress}).lean(true);
+            txFind.exec(function (err, doc) {
+              if(!err && doc){
+                data.creationTransaction = doc.hash;
+                data.owner = doc.from;
+              }
+              tokenData = {
+                "balance": data.balance,
+                "tokenHolders": 2,//tt fix, wait to dev
+                "count": count,
+                "transaction": data.creationTransaction,
+                "creator": data.owner,
+                "isVerified":false
+              }
+              res.write(JSON.stringify(tokenData));
+              res.end();
+            })
+          }
+        })
+      });
+      
       
     } catch (e) {
       console.error(e);

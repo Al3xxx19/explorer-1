@@ -38,8 +38,6 @@
         </div><!--end row-->
       </div><!--end portlet-body-->
 
-      
-
     </div><!--end portlet-->
   
     <!-- Begin: Transaction Datatable -->
@@ -55,6 +53,9 @@
                 </li>
                 <li class="" ng-show="addr.isContract" ng-class="{active: activeTab == 'tab_addr_3'}">
                     <a href="#tab_addr_3" data-toggle="tab" aria-expanded="false"> Contract Source </a>
+                </li>
+                <li class="" ng-show="addr.isMaster" ng-class="{active: activeTab == 'tab_addr_4'}">
+                        <a href="#tab_addr_4" data-toggle="tab" aria-expanded="false"> mine </a>
                 </li>
             </ul>
             <div class="tab-content">
@@ -120,7 +121,7 @@
                         </thead>
                         <tbody>
                             <tr ng-repeat="t in internalDatas track by $index">
-                                <td class="truncate-txhash"><span ng-show="tx.status==0" alt="transaction fail"><font color="#ff0000">  ！ </font></span> <a href="/tx/{{t.hash}}?isTransfer=true">{{t.hash}}</a> </td>
+                                <td class="truncate-txhash"><span ng-show="tx.status==0" alt="transaction fail"><image src="img/FAIL.png"/></span> <a href="/tx/{{t.hash}}?isTransfer=true">{{t.hash}}</a> </td>
                                 <td> <a href="/block/{{t.blockNumber}}">{{t.blockNumber}}</a> </td>
                                 <td ng-show="acc==t.from" class="truncate-addrhash">{{t.from}} </td>
                                 <td ng-show="acc!=t.from" class="truncate-addrhash"> <a href="/tokenAcc/{{token.address}}{{t.from}}">{{t.from}}</a> </td>
@@ -147,6 +148,8 @@
               <div class="tab-pane" ng-class="{active: activeTab == 'tab_addr_3'}" id="tab_addr_3">
                 <contract-source></contract-source>
               </div>
+
+              
 
             </div>
           </div>

@@ -64,7 +64,7 @@ angular.module('BlocksApp').controller('AddressController', function($stateParam
         "language": {
           "lengthMenu": "_MENU_ transactions",
           "zeroRecords": "No transactions found",
-          "infoEmpty": ":(",
+          "infoEmpty": "No transactions found",
           "infoFiltered": "(filtered from _MAX_ total txs)"
         },
         "columnDefs": [ 
@@ -82,7 +82,7 @@ angular.module('BlocksApp').controller('AddressController', function($stateParam
                       }, "targets": [1]},
           { "render": function(data, type, row) {
                         if(row[7]==0)
-                          return '<span ng-show="false"  alt="transaction fail"><font color="#ff0000">  ！ </font></span>'+'<a href="/tx/'+data+'">'+data+'</a>'
+                          return '<span ng-show="false"  alt="transaction fail"><image src="img/FAIL.png"/></span>'+'<a href="/tx/'+data+'">'+data+'</a>'
                         else
                           return '<a href="/tx/'+data+'">'+data+'</a>'
                       }, "targets": [0]},

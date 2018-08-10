@@ -17,6 +17,8 @@ module.exports = function(app){
   var contractListData = require('./contractListData');
   var transactionData = require('./transactionData');
   var tokenTransfer = require('./tokenTransfer');
+  var witnessData = require('./witnessData');
+  var witnessListData = require('./witnessListData');  
   var compile = require('./compiler');
   var fiat = require('./fiat');
   var stats = require('./stats');
@@ -40,6 +42,8 @@ module.exports = function(app){
   app.post('/contractListData', contractListData); 
   app.post('/transactionRelay', transactionData); 
   app.post('/tokenTransfer', tokenTransfer);
+  app.post('/witnessData', witnessData);
+  app.post('/witnessListData', witnessListData);
   app.post('/eventLog', eventLog);
   app.post('/web3relay', web3relay.data);
   app.post('/compile', compile);
@@ -54,23 +58,28 @@ var getAddr = function(req, res){
   // TODO: validate addr and tx
   var addr = req.body.addr.toLowerCase();
   var count = parseInt(req.body.count);
-
   var limit = parseInt(req.body.length);
   var start = parseInt(req.body.start);
-
   var data = { draw: parseInt(req.body.draw), recordsFiltered: count, recordsTotal: count };
+  
+  if(count == 1){//need calculate records count
+    Transaction.count({ $or: [{"to": addr}, {"from": addr}] }).exec().then(function(recordCount)
+    {
+      data.recordsFiltered = recordCount;
+      data.recordsTotal = recordCount;
 
-  var addrFind = Transaction.find( { $or: [{"to": addr}, {"from": addr}] })  
-
-  addrFind.lean(true).sort('-blockNumber').skip(start).limit(limit)
-          .exec("find", function (err, docs) {
-            if (docs)
-              data.data = filters.filterTX(docs, addr);      
-            else 
-              data.data = [];
-            res.write(JSON.stringify(data));
-            res.end();
-          });
+      var addrFind = Transaction.find( { $or: [{"to": addr}, {"from": addr}] })
+      addrFind.lean(true).sort('-blockNumber').skip(start).limit(limit).exec("find", function (err, docs) {
+        if (docs)
+          data.data = filters.filterTX(docs, addr);      
+        else 
+          data.data = [];
+        res.write(JSON.stringify(data));
+        res.end();
+      });
+    })
+  }
+  
 
 };
  
@@ -179,10 +188,26 @@ var getLatest = function(lim, res, callback) {
 
 /* get blocks from db */
 var sendBlocks = function(lim, res) {
-  var blockFind = Block.find({}, "number transactions timestamp miner extraData")
+  var blockFind = Block.find({}, "number txs timestamp miner extraData")
                       .lean(true).sort('-number').limit(lim);
   blockFind.exec(function (err, docs) {
-    res.write(JSON.stringify({"blocks": filters.filterBlocks(docs)}));
+    //latest data
+    docs = filters.filterBlocks(docs);
+    var result = {"blocks": docs};
+    if(docs.length>1){
+      result.blockHeight = docs[0].number;
+      result.blockTime = docs[0].timestamp;
+      var totalTXs = 0;
+      var costTime = docs[0].timestamp-docs[docs.length-1].timestamp;
+      for(var i=0; i<docs.length; i++){
+        if(docs[i].txs)
+          totalTXs+=docs[i].txs.length;
+      }
+      //result.TPS = Math.round(totalTXs/costTime);
+      result.TPS = totalTXs/costTime;
+    }
+
+    res.write(JSON.stringify(result));
     res.end();
   });
 }

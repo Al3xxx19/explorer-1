@@ -17,6 +17,11 @@ angular.module('BlocksApp').controller('HomeController', function($rootScope, $s
       }).success(function(data) {
         $scope.blockLoading = false;
         $scope.latest_blocks = data.blocks;
+
+        //get latest data
+        $scope.blockHeight = data.blockHeight;
+        $scope.blockTime = data.blockTime;
+        $scope.TPS = data.TPS;
       });
     }
     

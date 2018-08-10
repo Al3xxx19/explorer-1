@@ -57,8 +57,4 @@ Basic settings:
 
 Leave this running in the background to continuously fetch new blocks.
 
-### Stats
 
-Tools for updating network stats are under development, but can be found in:
-
-`./tools/stats.js` 
