@@ -1,10 +1,11 @@
 <!-- BEGIN PAGE CONTENT-->
 <div class="row">
 
-        <table>
-          <tr ><td width="25%" height="30">ETZ Balance </td> <td><span class="eth-stat-text">{{ balance | number: 10 }}</span></td></tr>
-          <tr ><td width="25%" height="30">total blocks</td> <td><span class="eth-stat-text">{{totalBlocks}}</span></td></tr>
-          <tr ><td width="25%" height="30"> </td> <td><span class="eth-stat-text"> </span></td></tr>
+        <table width="100%">
+            <tr ><td width="15%" height="25">Masternode ID  </td> <td><span class="eth-stat-text">0x{{witness}}</span></td></tr>
+            <tr ><td width="15%" height="25">Masternode Rewards </td> <td><span class="eth-stat-text">{{reward}}</span></td></tr>
+            <tr ><td width="15%" height="25">Total Blocks   </td> <td><span class="eth-stat-text">{{totalBlocks}}</span></td></tr>
+            <tr ><td width="15%" height="25"></td> <td></td></tr>
         </table>
 
 

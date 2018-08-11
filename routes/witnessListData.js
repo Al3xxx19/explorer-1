@@ -17,6 +17,9 @@ module.exports = function(req, res){
         }
         WitnessFind = Witness.find({}).skip(page*pageSize).limit(pageSize).lean(true);
         WitnessFind.exec(function (err, docs) {
+          for(var i=0; i<docs.length; i++){
+            docs[i].reward = 0.3375*docs[i].blocksNum;
+          }
           resultData.list=docs;
           respData = JSON.stringify(resultData);
           res.write(respData);

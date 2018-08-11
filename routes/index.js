@@ -196,15 +196,17 @@ var sendBlocks = function(lim, res) {
     var result = {"blocks": docs};
     if(docs.length>1){
       result.blockHeight = docs[0].number;
-      result.blockTime = docs[0].timestamp;
       var totalTXs = 0;
       var costTime = docs[0].timestamp-docs[docs.length-1].timestamp;
+      result.blockTime = costTime/docs.length;
+      result.blockTime = Math.round(result.blockTime*1000)/1000;
       for(var i=0; i<docs.length; i++){
         if(docs[i].txs)
           totalTXs+=docs[i].txs.length;
       }
       //result.TPS = Math.round(totalTXs/costTime);
       result.TPS = totalTXs/costTime;
+      result.TPS = Math.round(result.TPS*1000)/1000;
     }
 
     res.write(JSON.stringify(result));

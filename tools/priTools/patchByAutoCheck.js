@@ -31,7 +31,8 @@ var config3 = {
     "patchStartBlocks": 1,//1
     "patchEndBlocks": 394905,//"latest",//5485123,//600
     "quiet": true,
-    "terminateAtExistingDB": false
+    "terminateAtExistingDB": false,
+    "checkStartBlockNumber":539298
 };
 
 
@@ -288,13 +289,9 @@ var writeTransactionsToDB3 = function(blockData, eth) {
 }
 
 /*
-  Patch Missing Blocks
+  begin Patch Missing Blocks
 */
 var patchBlocks3 = function() {
-    // web3 = new Web3(new Web3.providers.HttpProvider('http://106.14.105.179:9646'));
-    // web3 = new Web3(new Web3.providers.HttpProvider('http://rpc.etherzero.org:80'));
-    // web3 = new Web3(new Web3.providers.HttpProvider('https://rpc.etherzero.org:443'));
-    web3 = new Web3(new Web3.providers.HttpProvider(config3.httpProvider));
     var lastBlock = web3.eth.blockNumber;
     if(config3.patchEndBlocks == "latest"){
         currentBlock = lastBlock+1;
@@ -302,14 +299,12 @@ var patchBlocks3 = function() {
         currentBlock = config3.patchEndBlocks+1;
     }
     console.log("topBlock:",lastBlock);
-    ContractStruct = web3.eth.contract(ERC20ABI);
-
     tryNextBlock();
 }
 
 var sleepFlag = 0;
 var tryNextBlock = function() {
-    currentBlock--
+    currentBlock--;
     sleepFlag++;
     console.log("block number:", currentBlock);
     if(currentBlock>=config3.patchStartBlocks){
@@ -321,17 +316,51 @@ var tryNextBlock = function() {
         }
         
     }else{
-        console.log("【finish path !】:", config3.patchEndBlocks);
-        mongoose.disconnect();
+        //set start end from checkList
+        if(discreteNumbers.length==0){
+            console.log("【finish path !】:", config3.patchEndBlocks);
+            mongoose.disconnect();
+            return;
+        }
+        
+        nextDiscreteNumber();
     }
 
 }
 
+function nextDiscreteNumber(){
+    config3.patchEndBlocks = discreteNumbers.pop();
+    config3.patchStartBlocks = discreteNumbers.pop();
+    sleepFlag = 0;
+    currentBlock = config3.patchEndBlocks+1;
+    console.log("-------new patch:"+config3.patchStartBlocks+","+config3.patchEndBlocks);
+    tryNextBlock();
+}
 
+//check discrete block number from db
+var discreteNumbers = [];
+function checkDiscreteBlockNumber(){
+    Block.find({'number':{$gt:config3.checkStartBlockNumber}}, "number").sort('number').exec(function (err, docs) {
+        if(err){
+            console.log(err);
+            return;
+        }
+        
+        for(var i=1; i<docs.length; i++){
+            if(docs[i].number-docs[i-1].number>1){//discrete
+                discreteNumbers.push(docs[i-1].number,docs[i].number);
+            }
+        }
+        console.log("discreteNumbers:"+discreteNumbers);
 
+        //begin patch
+        nextDiscreteNumber();
+    });
+}
 
 
 var ContractStruct;
 var currentBlock;
-
-patchBlocks3();
+web3 = new Web3(new Web3.providers.HttpProvider(config3.httpProvider));
+ContractStruct = web3.eth.contract(ERC20ABI);
+checkDiscreteBlockNumber();

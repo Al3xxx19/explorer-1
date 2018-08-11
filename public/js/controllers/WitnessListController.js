@@ -31,7 +31,7 @@ angular.module('BlocksApp').controller('WitnessListController', function($stateP
         if (data.error)
           $location.path("/err404/witness/" + witness);
         else {
-          $scope["balance"] = data.balance;
+          $scope["reward"] = data.reward;
           $scope["totalBlocks"+witness] = data.totalBlocks;
         }
       });

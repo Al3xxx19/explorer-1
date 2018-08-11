@@ -67,7 +67,7 @@ var listenBlocks = function(config, web3) {
         if(error) {
             console.log('Error: ' + error);
         } else if (log == null) {
-            console.log('Warning: null block hash');
+            //console.log('Warning: null block hash');
         } else {
             grabBlock(config, web3, log);
         }
@@ -101,12 +101,10 @@ var grabBlock = function(config, web3, blockHashOrNumber) {
 
         web3.eth.getBlock(desiredBlockHashOrNumber, true, function(error, blockData) {
             if(error) {
-                console.log('Warning: error on getting block with hash/number: ' +
-                    desiredBlockHashOrNumber + ': ' + error);
+                //console.log('Warning: error on getting block with hash/number: ' + desiredBlockHashOrNumber + ': ' + error);
             }
             else if(blockData == null) {
-                console.log('Warning: null block data received from the block with hash/number: ' +
-                    desiredBlockHashOrNumber);
+                //console.log('Warning: null block data received from the block with hash/number: ' + desiredBlockHashOrNumber);
             }
             else {
                 if('terminateAtExistingDB' in config && config.terminateAtExistingDB === true) {
@@ -165,9 +163,7 @@ var writeBlockToDB = function(config, blockData) {
     return new Block(blockData).save( function( err, block, count ){
         if ( typeof err !== 'undefined' && err ) {
             if (err.code == 11000) {
-                console.log('Skip: Duplicate key ' + 
-                blockData.number.toString() + ': ' + 
-                err);
+                //console.log('Skip: Duplicate key ' + blockData.number.toString() + ': ' + err);
             } else {
                console.log('Error: Aborted due to error on ' + 
                     'block number ' + blockData.number.toString() + ': ' + 
@@ -176,8 +172,7 @@ var writeBlockToDB = function(config, blockData) {
            }
         } else {
             if(!('quiet' in config && config.quiet === true)) {
-                console.log('DB successfully written for block number ' +
-                    blockData.number.toString() );
+                //console.log('DB successfully written for block number ' + blockData.number.toString() );
             }            
         }
       });
@@ -193,8 +188,7 @@ var checkBlockDBExistsThenWrite = function(config, blockData) {
         if (!b.length)
             writeBlockToDB(config, blockData);
         else {
-            console.log('Aborting because block number: ' + blockData.number.toString() + 
-                ' already exists in DB.');
+            //console.log('Aborting because block number: ' + blockData.number.toString() + ' already exists in DB.');
             process.exit(9);
         }
 
@@ -223,7 +217,7 @@ var writeTransactionsToDB = function(config, blockData, eth) {
             }
             if(txData.input && txData.input.length>2){// contract create, Event logs of internal transaction
                 if(txData.to == null){//contract create
-                    console.log("contract create at tx:"+txData.hash);
+                    //console.log("contract create at tx:"+txData.hash);
                     var contractdb = {}
                     var isTokenContract = true;
                     var Token = ContractStruct.at(receiptData.contractAddress);
@@ -329,12 +323,12 @@ var writeTransactionsToDB = function(config, blockData, eth) {
                 LogEvent.collection.insert(logEvents, function( err, logE ){
                     if ( typeof err !== 'undefined' && err ) {
                         if (err.code == 11000) {
-                            console.log('Skip: Duplicate key ' + err);
+                            //console.log('Skip: Duplicate key ' + err);
                         } else {
                            console.log('Error: Aborted due to error: ' + err);
                        }
                     } else if(!('quiet' in config && config.quiet === true)) {
-                        console.log('DB successfully written for block ' + blockData.transactions.length.toString() );
+                        //console.log('DB successfully written for block ' + blockData.transactions.length.toString() );
                     }
                 });
             }
@@ -345,12 +339,12 @@ var writeTransactionsToDB = function(config, blockData, eth) {
         Transaction.collection.insert(bulkOps, function( err, tx ){
             if ( typeof err !== 'undefined' && err ) {
                 if (err.code == 11000) {
-                    console.log('Skip: Duplicate key ' + err);
+                    //console.log('Skip: Duplicate key ' + err);
                 } else {
                    console.log('Error: Aborted due to error: ' + err);
                }
             } else if(!('quiet' in config && config.quiet === true)) {
-                console.log('DB successfully written for block ' + blockData.transactions.length.toString() );
+                //console.log('DB successfully written for block ' + blockData.transactions.length.toString() );
             }
         });
     }
@@ -391,7 +385,7 @@ var blockIter = function(web3, firstBlock, lastBlock, config) {
           if (c === 0) {
             grabBlock(config, web3, {'start': firstBlock, 'end': lastBlock});
           } else if (expectedBlocks > c) {
-            console.log("Missing: " + JSON.stringify(expectedBlocks - c));  
+            //console.log("Missing: " + JSON.stringify(expectedBlocks - c));  
             var midBlock = firstBlock + parseInt((lastBlock - firstBlock)/2); 
             blockIter(web3, firstBlock, midBlock, config);
             blockIter(web3, midBlock + 1, lastBlock, config);
@@ -403,7 +397,7 @@ var blockIter = function(web3, firstBlock, lastBlock, config) {
 
 
 var config = {
-    "rpc": 'http://localhost:8545',
+    "rpc": 'http://localhost:9646',
     "blocks": [ {"start": 0, "end": "latest"}],
     // "blocks": [ {"start": 4936270, "end": "latest"}],//ttt
     "quiet": true,

@@ -12,11 +12,10 @@ var Transaction     = mongoose.model( 'Transaction' );
 
 //modify according to your actual situation.
 var config3 = {
-    "httpProvider":"http://localhost:8545"
+    "httpProvider":"http://localhost:9646",
     "patchStartBlocks": 0,//1
     "patchEndBlocks": 394905,//"latest",//5485123,//600
-    "quiet": true,
-    "terminateAtExistingDB": false
+    "quiet": true
 };
 
 
@@ -110,9 +109,6 @@ var writeTransactionsToDB3 = function(blockData, eth) {
   Patch Missing Blocks
 */
 var patchBlocks3 = function() {
-    // web3 = new Web3(new Web3.providers.HttpProvider('http://106.14.105.179:9646'));
-    // web3 = new Web3(new Web3.providers.HttpProvider('http://rpc.etherzero.org:80'));
-    // web3 = new Web3(new Web3.providers.HttpProvider('https://rpc.etherzero.org:443'));
     web3 = new Web3(new Web3.providers.HttpProvider(config3.httpProvider));
     var lastBlock = web3.eth.blockNumber;
     if(config3.patchEndBlocks == "latest"){
@@ -133,13 +129,14 @@ var tryNextBlock = function() {
     if(currentBlock>=config3.patchStartBlocks){
         if(sleepFlag>3){
             sleepFlag = 0;
-            setTimeout(grabBlock3, 100);
+            setTimeout(grabBlock3, 300);
         }else{
             grabBlock3();
         }
         
     }else{
         console.log("【finish path !】:", config3.patchEndBlocks);
+        mongoose.disconnect();
     }
 
 }

@@ -7,7 +7,7 @@ angular.module('BlocksApp').controller('WitnessController', function($stateParam
 
     var witness = $stateParams.witness;
 
-    $rootScope.$state.current.data["pageSubTitle"] = witness;
+    $rootScope.$state.current.data["pageSubTitle"] = '0x'+witness;
     $scope.witness = witness;
     $scope.page = 0;
 
@@ -37,12 +37,12 @@ angular.module('BlocksApp').controller('WitnessController', function($stateParam
         if (data.error)
           $location.path("/err404/witness/" + witness);
         else {
-          $scope.balance = data.balance;
+          $scope.reward = data.reward;
           $scope.totalBlocks = data.totalBlocks;
         }
       });
     }
 
-    //$scope.metadata();//t wait for patch history witness
+    $scope.metadata();//t wait for patch history witness
     $scope.switchPage(0);
 })

@@ -65,6 +65,11 @@ BlocksApp.controller('HeaderController', ['$scope', '$location', function($scope
             $location.path("/addr/" + search);
         else if(search.length==16)//master node address
             $location.path("/witness/" + search);
+        else if(search.length==18){//master node address
+            if(search.indexOf("0x")==0){
+                $location.path("/witness/" + search.substr(2));
+            }
+        }
         else if (isTransaction(search))
             $location.path("/tx/" + search);
         else if (!isNaN(search))
@@ -319,7 +324,7 @@ BlocksApp.config(['$stateProvider', '$urlRouterProvider', function($stateProvide
         .state('witness', {
             url: "/witness/{witness}",
             templateUrl: "views/witness.html",
-            data: {pageTitle: 'witness'},
+            data: {pageTitle: 'Masternode'},
             controller: "WitnessController",
             resolve: {
                 deps: ['$ocLazyLoad', function($ocLazyLoad) {
@@ -336,7 +341,7 @@ BlocksApp.config(['$stateProvider', '$urlRouterProvider', function($stateProvide
         .state('witnessList', {
             url: "/witnessList",
             templateUrl: "views/witnessList.html",
-            data: {pageTitle: 'witness'},
+            data: {pageTitle: 'Masternode List'},
             controller: "WitnessListController",
             resolve: {
                 deps: ['$ocLazyLoad', function($ocLazyLoad) {

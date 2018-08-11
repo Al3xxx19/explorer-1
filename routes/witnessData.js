@@ -34,7 +34,7 @@ module.exports = function(req, res){
 
 
   }else if(action == "metadata"){//witness metadata
-    var resultData={"balance":0, "totalBlocks":0};
+    var resultData={"reward":0, "totalBlocks":0};
     
     var Witness = mongoose.model('Witness');
 
@@ -51,14 +51,12 @@ module.exports = function(req, res){
         }
 
         Block.count({'witness':witness, 'number':{$gt:witnessDoc.lastCountTo}}).exec(function(err,c){
-          if(err){
+          if(err || c==0){
             //console.log("查询"+witness+"大于"+witnessDoc.lastCountTo+"的区块失败："+err);
-            c = 0;
             res.write("{}");
             res.end();
             return
           }
-            
           
           Block.findOne({'witness':witness}).sort('-number').exec(function (err, doc) {//t 查询一条会导致排序失效
             if(doc){
@@ -67,7 +65,7 @@ module.exports = function(req, res){
               witnessDoc.blocksNum += c;
             }
             resultData.totalBlocks = witnessDoc.blocksNum;
-            resultData.balance = 0.3375*witnessDoc.blocksNum;
+            resultData.reward = 0.3375*witnessDoc.blocksNum;
             respData = JSON.stringify(resultData);
             res.write(respData);
             res.end();

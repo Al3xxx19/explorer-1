@@ -5,15 +5,17 @@
             <table class="col-md-6 table">
                     <thead>
                             <tr>
-                                <th> Witness </th>
+                                <th> Masternode ID</th>
                                 <th> Total blocks </th>
+                                <th> Masternode Rewards </th>
                                 <th> Blocks height </th>
                                 <th> Latest detail </th>
                             </tr>
                         </thead>
                 <tr ng-repeat="data in listData track by $index">
-                    <td> <a class="font-green" href="/witness/{{data.witness}}">{{data.witness}} </a></td>
+                    <td> <a class="font-green" href="/witness/{{data.witness}}">0x{{data.witness}} </a></td>
                     <td >{{data.blocksNum}}</td>
+                    <td >{{data.reward}}</td>
                     <td >{{data.lastCountTo}}</td>
                     <td ><a href="/witness/{{data.witness}}">view</a></td>
                     <!--td ng-click="update(data.witness)">{{balance}} update</td-->
