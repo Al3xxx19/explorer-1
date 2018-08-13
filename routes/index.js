@@ -23,7 +23,8 @@ module.exports = function(app){
   var fiat = require('./fiat');
   var stats = require('./stats');
   var eventLog = require('./eventLog.js');
-  var publicAPIData = require('./publicAPIData.js');
+  var publicAPI = require("./publicAPIData");
+
 
   /* 
     Local DB: data request format
@@ -35,7 +36,8 @@ module.exports = function(app){
   app.post('/tx', getTx);
   app.post('/block', getBlock);
   app.post('/data', getData);
-  app.get('/totaletz', getTotalEtz);
+  app.get('/publicAPI', publicAPI);//all public APIs
+  app.get('/totaletz', publicAPI.getTotalEtz);
 
   //app.post('/daorelay', DAO);
   app.post('/tokenrelay', Token);  
@@ -48,7 +50,6 @@ module.exports = function(app){
   app.post('/eventLog', eventLog);
   app.post('/web3relay', web3relay.data);
   app.post('/compile', compile);
-  app.post('/publicAPIData', publicAPIData);
 
   app.post('/fiat', fiat);
   app.post('/stats', stats);

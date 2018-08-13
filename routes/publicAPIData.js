@@ -9,8 +9,6 @@ module.exports = function(req, res){
       methodName = req.query.methodName;
       if(methodName==totalETZ){
           totalBlockNum = eth.blockNumber;
-          //resultData = ;
-          //respData = JSON.stringify(resultData);
           respData = 196263376+0.45*totalBlockNum;
           res.write(String(respData));
           res.end();
@@ -21,3 +19,10 @@ module.exports = function(req, res){
       console.error(e);
     }
 }; 
+
+module.exports.getTotalEtz = function(req, res){
+  totalBlockNum = eth.blockNumber;
+  respData = 196263376+0.45*totalBlockNum;
+  res.write(String(respData));
+  res.end();
+}

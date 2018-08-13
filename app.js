@@ -32,9 +32,6 @@ app.get('/', function(req, res) {
 });
 require('./routes')(app);
 
-var publicAPI = require("./routes/publicAPIData");
-app.get('/publicAPI', publicAPI);
-
 // let angular catch them
 app.use(function(req, res) {
   res.render('index');

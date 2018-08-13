@@ -355,23 +355,6 @@ BlocksApp.config(['$stateProvider', '$urlRouterProvider', function($stateProvide
                 }]
             }
         })
-        .state('publicAPI', {
-            url: "/publicAPI/{params}",
-            templateUrl: "views/publicAPI.html",
-            // data: {pageTitle: 'publicAPI'},
-            controller: "PublicAPIController",
-            resolve: {
-                deps: ['$ocLazyLoad', function($ocLazyLoad) {
-                    return $ocLazyLoad.load({
-                        name: 'BlocksApp',
-                        // insertBefore: '#ng_load_plugins_before', 
-                        files: [
-                             '/js/controllers/PublicAPIController.js'
-                        ]
-                    });
-                }]
-            }
-        })
         .state('dao', {
             url: "/dao",
             templateUrl: "views/dao.html",
