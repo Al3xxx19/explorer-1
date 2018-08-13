@@ -6,7 +6,8 @@ angular.module('BlocksApp').controller('WitnessController', function($stateParam
     });
 
     var witness = $stateParams.witness;
-
+    if(witness.indexOf("0x")==0)
+      witness = witness.substr(2);
     $rootScope.$state.current.data["pageSubTitle"] = '0x'+witness;
     $scope.witness = witness;
     $scope.page = 0;
@@ -24,6 +25,12 @@ angular.module('BlocksApp').controller('WitnessController', function($stateParam
         else {
           $scope.blocks = data.blocks;
           $scope.page = data.page;
+          
+          //compute block time
+          if(_page==0 && data.blocks.length>1){
+            var totalTime = data.blocks[0].timestamp - data.blocks[data.blocks.length-1].timestamp;
+            $scope.blockTime = totalTime/(data.blocks.length-1);
+          }
         }
       });
     }
@@ -43,6 +50,6 @@ angular.module('BlocksApp').controller('WitnessController', function($stateParam
       });
     }
 
-    $scope.metadata();//t wait for patch history witness
+    $scope.metadata();
     $scope.switchPage(0);
 })

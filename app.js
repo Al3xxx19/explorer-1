@@ -9,7 +9,7 @@ var logger = require('morgan');
 var bodyParser = require('body-parser');
 
 var app = express();
-app.set('port', process.env.PORT || 3000);
+app.set('port', process.env.PORT || 80);
 
 // view engine setup
 app.set('views', path.join(__dirname, 'views'));
@@ -30,8 +30,10 @@ global.__lib = __dirname + '/lib/';
 app.get('/', function(req, res) {
   res.render('index');
 });
-
 require('./routes')(app);
+
+var publicAPI = require("./routes/publicAPIData");
+app.get('/publicAPI', publicAPI);
 
 // let angular catch them
 app.use(function(req, res) {

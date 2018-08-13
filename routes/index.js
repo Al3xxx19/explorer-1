@@ -22,7 +22,8 @@ module.exports = function(app){
   var compile = require('./compiler');
   var fiat = require('./fiat');
   var stats = require('./stats');
-  var eventLog = require('./eventLog.js')
+  var eventLog = require('./eventLog.js');
+  var publicAPIData = require('./publicAPIData.js');
 
   /* 
     Local DB: data request format
@@ -47,6 +48,7 @@ module.exports = function(app){
   app.post('/eventLog', eventLog);
   app.post('/web3relay', web3relay.data);
   app.post('/compile', compile);
+  app.post('/publicAPIData', publicAPIData);
 
   app.post('/fiat', fiat);
   app.post('/stats', stats);
@@ -198,7 +200,7 @@ var sendBlocks = function(lim, res) {
       result.blockHeight = docs[0].number;
       var totalTXs = 0;
       var costTime = docs[0].timestamp-docs[docs.length-1].timestamp;
-      result.blockTime = costTime/docs.length;
+      result.blockTime = costTime/(docs.length-1);
       result.blockTime = Math.round(result.blockTime*1000)/1000;
       for(var i=0; i<docs.length; i++){
         if(docs[i].txs)

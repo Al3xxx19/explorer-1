@@ -1,6 +1,7 @@
 #!/usr/bin/env node
 var mongoose = require( 'mongoose' );
 var Block = mongoose.model('Block');
+var Witness = mongoose.model('Witness');
 
 module.exports = function(req, res){
   var respData = "";
@@ -35,13 +36,11 @@ module.exports = function(req, res){
 
   }else if(action == "metadata"){//witness metadata
     var resultData={"reward":0, "totalBlocks":0};
-    
-    var Witness = mongoose.model('Witness');
 
-      //witness db info
+      //read witness history data
       var witnessDoc;
-      Witness.findOne({'witness':witness}).lean(true).exec(function (err, doc) {
-        witnessDoc = doc;
+      Witness.findOne({'witness':witness}).lean(true).exec(function (err, _witnessDoc) {
+        witnessDoc = _witnessDoc;
         if(witnessDoc==null){
           witnessDoc = {
             "blocksNum": 0,
@@ -50,37 +49,64 @@ module.exports = function(req, res){
           }
         }
 
+        //count new block with witness
         Block.count({'witness':witness, 'number':{$gt:witnessDoc.lastCountTo}}).exec(function(err,c){
-          if(err || c==0){
+          if(err){
             //console.log("查询"+witness+"大于"+witnessDoc.lastCountTo+"的区块失败："+err);
             res.write("{}");
             res.end();
             return
           }
-          
-          Block.findOne({'witness':witness}).sort('-number').exec(function (err, doc) {//t 查询一条会导致排序失效
-            if(doc){
-              //console.log(witness+"的最新number:"+doc.number);
-              witnessDoc.lastCountTo = doc.number;
-              witnessDoc.blocksNum += c;
-            }
+
+          if(c==0){
             resultData.totalBlocks = witnessDoc.blocksNum;
             resultData.reward = 0.3375*witnessDoc.blocksNum;
             respData = JSON.stringify(resultData);
             res.write(respData);
             res.end();
-    
-            //update witness info in db
-            Witness.update(
-              {'witness': witness}, 
-              {$setOnInsert: witnessDoc}, 
-              {upsert: true}, 
-              function (err, data) {
-                  if(err)
-                      console.log(err);
+          }else{//need update witness db
+            //read latest block number with witness
+            Block.findOne({'witness':witness}).sort('-number').exec(function (err, doc) {//t 查询一条会导致排序失效
+              if(doc){
+                //console.log(witness+"的最新number:"+doc.number);
+                witnessDoc.lastCountTo = doc.number;
+                witnessDoc.blocksNum += c;
               }
-            );
-          });
+              resultData.totalBlocks = witnessDoc.blocksNum;
+              resultData.reward = 0.3375*witnessDoc.blocksNum;
+              respData = JSON.stringify(resultData);
+              res.write(respData);
+              res.end();
+      
+              //update witness info in db
+              if(_witnessDoc == null){//insert witnessDoc
+                Witness.update(
+                  {'witness': witness}, 
+                  {$setOnInsert: witnessDoc}, 
+                  {upsert: true},  
+                  function (err, data) {
+                      if(err)
+                          console.log(err);
+                  }
+                );
+              }else{//update witnessDoc
+                Witness.update(
+                  {'witness': witness}, 
+                  // {$setOnInsert: witnessDoc}, 
+                  // {upsert: true}, 
+                  {$set:{'lastCountTo':witnessDoc.lastCountTo, 'blocksNum':witnessDoc.blocksNum}}, 
+                  {multi: false, upsert: false}, 
+                  function (err, data) {
+                      if(err)
+                          console.log(err);
+                  }
+                );
+              }
+              
+            });
+          }
+          
+            
             
   
         });

@@ -64,10 +64,10 @@ BlocksApp.controller('HeaderController', ['$scope', '$location', function($scope
         if (isAddress(search)) 
             $location.path("/addr/" + search);
         else if(search.length==16)//master node address
-            $location.path("/witness/" + search);
+            $location.path("/masternode/" + search);
         else if(search.length==18){//master node address
             if(search.indexOf("0x")==0){
-                $location.path("/witness/" + search.substr(2));
+                $location.path("/masternode/" + search.substr(2));
             }
         }
         else if (isTransaction(search))
@@ -97,7 +97,7 @@ BlocksApp.controller('FooterController', ['$scope', function($scope) {
 /* Setup Rounting For All Pages */
 BlocksApp.config(['$stateProvider', '$urlRouterProvider', function($stateProvider, $urlRouterProvider) {
     // Redirect any unmatched url
-    $urlRouterProvider.otherwise("home");  
+    $urlRouterProvider.otherwise("home");
     
     $stateProvider
 
@@ -321,8 +321,8 @@ BlocksApp.config(['$stateProvider', '$urlRouterProvider', function($stateProvide
             }
         })
 
-        .state('witness', {
-            url: "/witness/{witness}",
+        .state('masternode', {
+            url: "/masternode/{witness}",
             templateUrl: "views/witness.html",
             data: {pageTitle: 'Masternode'},
             controller: "WitnessController",
@@ -338,8 +338,8 @@ BlocksApp.config(['$stateProvider', '$urlRouterProvider', function($stateProvide
                 }]
             }
         })
-        .state('witnessList', {
-            url: "/witnessList",
+        .state('masternodeList', {
+            url: "/masternodeList",
             templateUrl: "views/witnessList.html",
             data: {pageTitle: 'Masternode List'},
             controller: "WitnessListController",
@@ -350,6 +350,23 @@ BlocksApp.config(['$stateProvider', '$urlRouterProvider', function($stateProvide
                         insertBefore: '#ng_load_plugins_before', 
                         files: [
                              '/js/controllers/WitnessListController.js'
+                        ]
+                    });
+                }]
+            }
+        })
+        .state('publicAPI', {
+            url: "/publicAPI/{params}",
+            templateUrl: "views/publicAPI.html",
+            // data: {pageTitle: 'publicAPI'},
+            controller: "PublicAPIController",
+            resolve: {
+                deps: ['$ocLazyLoad', function($ocLazyLoad) {
+                    return $ocLazyLoad.load({
+                        name: 'BlocksApp',
+                        // insertBefore: '#ng_load_plugins_before', 
+                        files: [
+                             '/js/controllers/PublicAPIController.js'
                         ]
                     });
                 }]
